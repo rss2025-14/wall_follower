@@ -31,8 +31,8 @@ class ExampleNode(Node):
         """
         msg = AckermannDriveStamped()
         msg.header.stamp = self.get_clock().now().to_msg()
-        # Example drive command: go in a circle.
-        msg.drive.steering_angle = 0.34
+        # Example drive command: go straight
+        msg.drive.steering_angle = 0.0
         msg.drive.speed = 0.75
         self.publisher_.publish(msg)
 
