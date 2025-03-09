@@ -20,7 +20,7 @@ class ExampleNode(Node):
         self.timer = self.create_timer(0.05, self.timer_callback)
 
         # Publisher for visualization markers (for displaying laser points in RViz)
-        self.wall_marker_pub = self.create_publisher(Marker, "/wall_points", 1)
+        self.wall_marker_pub = self.create_publisher(Marker, "/front_points", 1)
 
         # Subscribe to the laser scan topic
         self.laser_sub = self.create_subscription(LaserScan, '/scan', self.laser_callback, 10)
@@ -63,7 +63,7 @@ class ExampleNode(Node):
 
         # Publish the visualization if there are points in the wedge
         VisualizationTools.plot_line(x_points, y_points, self.wall_marker_pub,
-                                         color=(1.0, 0.0, 0.0), frame="/base_link")
+                                         color=(0.0, 0.0, 1.0), frame="/base_link")
 
 def main(args=None):
     rclpy.init(args=args)
