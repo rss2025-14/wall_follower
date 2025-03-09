@@ -146,7 +146,7 @@ class WallFollower(Node):
             y_vals_opp = opp_ranges * np.sin(opp_angles)
             # Publish the opposite wall points on a separate topic (/opposite_wall_points)
             VisualizationTools.plot_line(x_vals_opp, y_vals_opp, self.opp_wall_pub,
-                                         color=(0.0, 0.0, 1.0), frame="/base_link", marker_id=0)
+                                         color=(0.0, 1.0, 0.0), frame="/base_link")
 
         # --- Implementing the Evaluation Metric ---
         # Compute the lateral deviation (absolute error from the desired distance)
