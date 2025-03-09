@@ -76,8 +76,8 @@ class SafetyController(Node):
         VisualizationTools.plot_line(x_points, y_points, self.wall_marker_pub,
                                        color=(0.0, 0.0, 1.0), frame="/base_link")
 
-        # Compute safety distance: always at least 0.1, or 0.1 * velocity.
-        safety_distance = max(0.1, 0.1 * self.velocity)
+        # Compute safety distance: always at least 1.0, or 1.0 * velocity.
+        safety_distance = max(1.0, 1.0 * self.velocity)
 
         # Check if any measured point is closer than the safety distance.
         if wedge_ranges.size > 0:

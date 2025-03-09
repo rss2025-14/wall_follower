@@ -33,7 +33,7 @@ class ExampleNode(Node):
         msg.header.stamp = self.get_clock().now().to_msg()
         # Example drive command: go straight
         msg.drive.steering_angle = 0.0
-        msg.drive.speed = 0.75
+        msg.drive.speed = 2.0
         self.publisher_.publish(msg)
 
     def laser_callback(self, scan_msg: LaserScan):
