@@ -3,4 +3,7 @@
   <node pkg="wall_follower" name="wall_follower" exec="wall_follower" output="screen">
     <param from="$(find-pkg-share wall_follower)/params.yaml"/>
   </node>
+  <node pkg="wall_follower" name="safety_controller" exec="safety_controller" output="screen">
+    <param from="$(find-pkg-share wall_follower)/params.yaml"/>
+  </node>
 </launch>
