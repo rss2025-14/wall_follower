@@ -6,6 +6,7 @@ from sensor_msgs.msg import LaserScan
 from ackermann_msgs.msg import AckermannDriveStamped
 from visualization_msgs.msg import Marker
 from rcl_interfaces.msg import SetParametersResult
+from std_msgs.msg import Float32
 
 from wall_follower.visualization_tools import VisualizationTools
 
@@ -59,8 +60,14 @@ class WallFollower(Node):
         self.max_slope_threshold = 5 
         self.max_std_dev_threshold = 0.2 
 
-        # OPTIONAL: A publisher for debugging lines in RViz
+        # Publisher for drawing the wall points used by wall follower
         self.wall_marker_pub = self.create_publisher(Marker, "/wall_points", 1) # Plots the wall points being followed
+
+        # Publisher for the opposite (unused) wall points
+        self.opp_wall_pub = self.create_publisher(Marker, "/opposite_wall_points", 1)
+
+        # Publisher for the evaluation metric: lateral deviation
+        self.error_pub = self.create_publisher(Float32, "/wall_follower/error", 10)
 
         self.get_logger().info("Wall Follower node initialized.")
 
@@ -74,6 +81,7 @@ class WallFollower(Node):
         # 1. Convert LaserScan to arrays
         ranges = np.array(scan_msg.ranges, dtype=np.float32)
         angles = np.linspace(scan_msg.angle_min, scan_msg.angle_max, len(ranges))
+        
 
         # 2. Side wedge
         if self.SIDE == 1:  # left
@@ -112,6 +120,41 @@ class WallFollower(Node):
 
         # Fit line => get distance, slope, std_dev
         wall_dist, slope_side, std_side = self.fit_line_and_compute_distance(x_vals, y_vals)
+
+        # --- Publish opposite wall points to a separate topic ---
+        # Define the opposite wedge that does not overlap with the current follow wedge.
+        if self.SIDE == 1:  # following left wall => opposite wedge is right side
+            opp_min_angle = np.deg2rad(-170)
+            opp_max_angle = np.deg2rad(-30)
+        else:             # following right wall => opposite wedge is left side
+            opp_min_angle = np.deg2rad(30)
+            opp_max_angle = np.deg2rad(170)
+
+        opp_mask = (angles >= opp_min_angle) & (angles <= opp_max_angle) & valid_mask & distance_mask
+        opp_ranges = ranges[opp_mask]
+        opp_angles = angles[opp_mask]
+
+        if len(opp_ranges) > 0:
+            # Remove outliers for the opposite side
+            r_mean_opp = np.mean(opp_ranges)
+            r_std_opp = np.std(opp_ranges)
+            inlier_mask_opp = np.abs(opp_ranges - r_mean_opp) < 1.5 * r_std_opp
+            opp_ranges = opp_ranges[inlier_mask_opp]
+            opp_angles = opp_angles[inlier_mask_opp]
+            # Convert to (x,y)
+            x_vals_opp = opp_ranges * np.cos(opp_angles)
+            y_vals_opp = opp_ranges * np.sin(opp_angles)
+            # Publish the opposite wall points on a separate topic (/opposite_wall_points)
+            VisualizationTools.plot_line(x_vals_opp, y_vals_opp, self.opp_wall_pub,
+                                         color=(0.0, 0.0, 1.0), frame="/base_link", marker_id=0)
+
+        # --- Implementing the Evaluation Metric ---
+        # Compute the lateral deviation (absolute error from the desired distance)
+        lateral_error = abs(self.DESIRED_DISTANCE - wall_dist)
+        error_msg = Float32()
+        error_msg.data = lateral_error
+        self.error_pub.publish(error_msg)
+        # ---------------------------------------------
 
         # 3. If too close => BACK UP & STEER AWAY
         TOO_CLOSE_THRESHOLD = 0.2 * self.DESIRED_DISTANCE
