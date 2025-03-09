@@ -16,10 +16,10 @@ class WallFollower(Node):
         super().__init__("wall_follower")
         # Declare parameters to make them available for use
         # DO NOT MODIFY THIS! 
-        self.declare_parameter("scan_topic", "scan_topic")
-        self.declare_parameter("drive_topic", "drive_topic")
+        self.declare_parameter("scan_topic", "/scan")
+        self.declare_parameter("drive_topic", "/vesc/input/navigation")
         self.declare_parameter("side", 1)
-        self.declare_parameter("velocity", 4.0)
+        self.declare_parameter("velocity", 1.0)
         self.declare_parameter("desired_distance", 1.0)
 
         # Fetch constants from the ROS parameter server
@@ -63,8 +63,6 @@ class WallFollower(Node):
         self.wall_marker_pub = self.create_publisher(Marker, "/wall_points", 1) # Plots the wall points being followed
 
         self.get_logger().info("Wall Follower node initialized.")
-
-    # TODO: Write your callback functions here    
 
     def scan_callback(self, scan_msg: LaserScan):
         """
