@@ -113,7 +113,25 @@ class WallFollower(Node):
         # Fit line => get distance, slope, std_dev
         wall_dist, slope_side, std_side = self.fit_line_and_compute_distance(x_vals, y_vals)
 
-        # 3. (Optional) Corner wedge logic
+        # 3. If too close => BACK UP & STEER AWAY
+        TOO_CLOSE_THRESHOLD = 0.2 * self.DESIRED_DISTANCE
+        if wall_dist < TOO_CLOSE_THRESHOLD:
+            # Robot is dangerously close to the wall
+            reverse_speed = -2.0   # negative => backing up
+            # Steer away from the wall:
+            #   If SIDE=1 (left), we want negative steering => turn right
+            #   If SIDE=-1 (right), we want positive steering => turn left
+            reverse_steer = self.SIDE * 0.3
+
+            # Publish
+            max_steering = 0.34
+            reverse_steer = max(-max_steering, min(max_steering, reverse_steer))
+
+            self.publish_drive(reverse_speed, reverse_steer)
+            self.get_logger().info("TOO CLOSE => backing up and steering away!")
+            return
+
+        # 4. (Optional) Corner wedge logic
         if self.SIDE == 1:  # left
             corner_min_angle = 0.0
             corner_max_angle = np.deg2rad(30)
@@ -138,7 +156,7 @@ class WallFollower(Node):
         slope_diff = abs(slope_side - slope_corner)
         corner_detected = (corner_dist < corner_threshold) or (slope_diff > 2.0)
 
-        # 4. Normal PD control if not backing up
+        # 5. Normal PD control if not backing up
         error = self.DESIRED_DISTANCE - wall_dist
         now_time = self.get_clock().now()
         dt = (now_time - self.prev_time).nanoseconds * 1e-9
@@ -162,7 +180,7 @@ class WallFollower(Node):
             steering_angle = max(-max_steering, min(max_steering, steering_angle))
             self.get_logger().info("Corner detected => slowing + turning away")
 
-        # 5. Publish final drive
+        # 6. Publish final drive
         self.publish_drive(speed_cmd, steering_angle)
         self.get_logger().info(f"Steering angle: {steering_angle:.3f}, Speed: {speed_cmd:.3f}")
 
@@ -248,4 +266,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    

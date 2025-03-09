@@ -27,6 +27,7 @@ setup(
             "example=wall_follower.example:main",
             "safety_example=wall_follower.safety:main",
             "wall_follower = wall_follower.wall_follower:main",
+            "wall_follower_with_reverse = wall_follower.wall_follower_with_reverse:main",
             'test_wall_follower = wall_follower.test_wall_follower:main',
             'safety_controller = wall_follower.safety_controller:main',
         ],
